@@ -1,0 +1,13 @@
+BUDisplay,LighthouseURL,Format,Affiliation,LoadDate,RequestedURL,DeviceType,Category,WebVital,FullMetric,Metric,Value
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,AVERAGE,largest contentful paint,largest_contentful_paint_prop_avg,percent_avg,0.201
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,SLOW,cumulative layout shift score,cumulative_layout_shift_score_prop_avg,percent_avg,0.33
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,FAST,first input delay,first_input_delay_prop_avg,percent_avg,0.043
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,FAST,first input delay,first_input_delay_prop_fast,percent_fast,0.944
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,SLOW,cumulative layout shift score,cumulative_layout_shift_score_prop_fast,percent_fast,0.292
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,AVERAGE,largest contentful paint,largest_contentful_paint_prop_fast,percent_fast,0.593
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,AVERAGE,largest contentful paint,largest_contentful_paint_prop_slow,percent_slow,0.206
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,SLOW,cumulative layout shift score,cumulative_layout_shift_score_prop_slow,percent_slow,0.378
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,FAST,first input delay,first_input_delay_prop_slow,percent_slow,0.013
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,SLOW,cumulative layout shift score,cumulative_layout_shift_score_percentile,time_in_ms,34
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,AVERAGE,largest contentful paint,largest_contentful_paint_percentile,time_in_ms,3593
+KOKI-TV,https://www.fox23.com/,News,CMG,2020-09-14 12:04:15 UTC,https://www.fox23.com/,desktop,FAST,first input delay,first_input_delay_percentile,time_in_ms,6
