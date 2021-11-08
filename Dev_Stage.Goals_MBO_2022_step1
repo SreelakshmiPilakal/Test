@@ -1,0 +1,72 @@
+select Datetbl.Date, Datetbl.DayName DayofWeek ,
+--Base.DayofWeek DayofWeek_Mbo,
+Base.DivisionKey,
+Base.DivisionDisplay,
+Base.Market,
+Base.BUKey,
+Base.BUDisplay,
+Base.BULongDisplay,
+Base.ProductKey,
+Base.ProductDisplay,
+Base.SiteID,
+Base.ProductType,
+Base.ProductClass,
+Base.ContentFocus,
+Base.PaidOrFree,
+Base.SiteVersion,
+Base.AppVendor,
+Base.Metric,
+Base.GoalTrafficValue GoalTrafficValue_2021,    #2021 goal traffic value
+cast(Base.GoalTrafficValue*1.02 as int64) GoalTrafficValue,  #GoalTrafficvalue with 2% increase for 2022
+
+from
+(SELECT Date, DayName , Holiday , IsHoliday FROM `cmg-uber-global.Data_Views.vw_Date` 
+where date  between '2022-01-01' and '2022-12-31') Datetbl 
+
+join
+
+
+(
+
+select * from (
+
+SELECT distinct  DayofWeek,
+DivisionKey, DivisionDisplay, Market, BUKey, BUDisplay, BULongDisplay, ProductKey, ProductDisplay, SiteID, ProductType, ProductClass, ContentFocus, PaidOrFree, SiteVersion, AppVendor, Metric ,GoalTrafficValue,  FROM `cmg-uber-global.Goals.Goals_MBO` 
+where --budisplay='WSB-TV' and 
+date>='2021-01-01' and metric in ('Pageviews','Sessions')
+--and productdisplay='WSB-TV News App' --and siteversion='ipad' 
+and valid=true
+--and dayofweek='Wednesday'
+--order by date
+)
+--where  productdisplay='WSB-TV News App' and siteversion='ipad' and metric='Pageviews'
+
+
+union all
+
+select * from (
+
+SELECT distinct  DayofWeek,
+DivisionKey, DivisionDisplay, Market, BUKey, BUDisplay, BULongDisplay, ProductKey, ProductDisplay, SiteID, ProductType, ProductClass, ContentFocus, PaidOrFree, SiteVersion, AppVendor, Metric ,GoalTrafficValue,  FROM `cmg-uber-global.Goals.Goals_MBO` 
+where --budisplay='WSB-TV' and 
+date>='2021-07-01' and metric in ('VideoSegmentStart','ContinuousVideoChannelStart')
+--and productdisplay='WSB-TV News App' --and siteversion='ipad' 
+and valid=true
+--and dayofweek='Wednesday'
+--order by date
+)
+
+)Base
+
+on Datetbl.DayName=Base.Dayofweek
+
+/*where --budisplay='WSB-TV' and 
+ metric in ('VideoSegmentStart','ContinuousVideoChannelStart')
+and productdisplay='WSB-TV News App' and siteversion='ipad' 
+
+--and dayofweek='Wednesday' 
+
+and metric='VideoSegmentStart'
+*/
+
+
