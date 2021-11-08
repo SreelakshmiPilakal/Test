@@ -1,0 +1,224 @@
+
+select * FROM `cmg-uber-global.Dev_Stage.vw_Imps_Goal_4_Updated` 
+where Date<=(select max(date) from `cmg-uber-global.Datamart.Impressions_Traffic_Datamart_v2` where indicator in ( 'Revenue_Programmatic','Revenue_GAM_Operative'))
+
+
+
+Union All
+
+
+Select * from (
+
+
+Select * from (
+
+
+
+Select Data1.Date,
+Data1.  Market ,
+Data1.  DivisionDisplay ,
+Data1.  BUDisplay          ,
+Data1.  ProductType      ,
+Data1.  AdType ,
+Data1.  MetricCol           ,
+Data1.  Metric   ,
+Data1.  Indicator            ,
+Data1.  Line_item_Type ,
+Data1.  DayofWeek        ,
+Data1.  Imp_DivisionKey             ,
+Data1.  Imp_BUKey        ,
+Data1.  Imp_BULongDisplay       ,
+Data1.  Imp_ProductKey             ,
+Data1.  Imp_SiteID         ,
+Data1.  Imp_ProductClass          ,
+Data1.  Imp_ContentFocus         ,
+Data1.  Imp_Siteversion              ,
+Data1.  Imp_AppVendor             ,
+Data1.  Advertiser_Name           ,
+Data1.  Line_Item           ,
+Data1.  Actual_Impressions        ,
+Data1.  Actual_Value     ,
+Data1.  Actual_Revenue              ,
+Data1.  Imp_GoalTrafficValue_FromMBO            ,
+Data1.  Imp_ImpressionsRatio   ,
+Data1.  GoalTrafficValue_Impressions_Forecast ,
+Data1.  Actual_CPM       ,
+Data1.  Classification_adj     Classification       ,
+Final_Impressions_Forecast_Split            ,
+Final_Revenue_Forecast_Split   ,
+Data1.  CPM_Direct       ,
+Data1.  CPM_Indirect    ,
+Data1.  Unmonetized_Impressions_Pct ,
+Data1.  Direct_Impressions_Pct ,
+Data1.  Indirect_Impressions_Pct            ,
+--Data1.              Final_Revenue_Forecast_Split_1             ,
+--Data1.              Classification_1 ,
+
+
+from (
+
+
+
+
+
+
+select * from (
+
+
+SELECT Date       ,
+Market ,
+DivisionDisplay ,
+BUDisplay          ,
+ProductType      ,
+AdType ,
+MetricCol           ,
+Metric   ,
+Indicator            ,
+Line_item_Type ,
+DayofWeek        ,
+Imp_DivisionKey             ,
+Imp_BUKey        ,
+Imp_BULongDisplay       ,
+Imp_ProductKey             ,
+Imp_SiteID         ,
+Imp_ProductClass          ,
+Imp_ContentFocus         ,
+Imp_Siteversion              ,
+Imp_AppVendor             ,
+Advertiser_Name           ,
+Line_Item           ,
+Actual_Impressions        ,
+Actual_Value     ,
+Actual_Revenue              ,
+Imp_GoalTrafficValue_FromMBO            ,
+Imp_ImpressionsRatio   ,
+GoalTrafficValue_Impressions_Forecast ,
+Actual_CPM       ,
+--Classification  ,
+--Final_Impressions_Forecast_Split         ,
+--Final_Revenue_Forecast_Split ,
+CPM_Direct       ,
+CPM_Indirect    ,
+Unmonetized_Impressions_Pct ,
+Direct_Impressions_Pct ,
+Indirect_Impressions_Pct            ,
+
+GoalTrafficValue_Impressions_Forecast*Unmonetized_Impressions_Pct  Unmonetized --Unmonetized_Impressions_Forecast
+,
+GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct  Direct --Direct_Impressions_Forecast
+,
+GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct   Indirect --Indirect_Impressions_Forecast    
+
+,
+
+--((GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct)*CPM_Direct)/1000 Direct_Revenue_Forecast ,
+--((GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct)*CPM_InDirect)/1000  InDirect_Revenue_Forecast 
+
+
+
+FROM `cmg-uber-global.Dev_Stage.vw_Imps_Goal_4_Updated` 
+where Date>(select max(date) from `cmg-uber-global.Datamart.Impressions_Traffic_Datamart_v2` where indicator in ( 'Revenue_Programmatic','Revenue_GAM_Operative'))
+
+)
+Unpivot(Final_Impressions_Forecast_Split for Classification_adj in (Unmonetized,Direct,Indirect )) as Final_Impressions_Forecast_Split_adj
+)Data1
+
+
+
+
+
+
+
+
+
+
+
+left join
+
+
+
+(
+
+Select  * from (
+
+select * from (
+
+
+SELECT Date       ,
+Market ,
+DivisionDisplay ,
+BUDisplay          ,
+ProductType      ,
+AdType ,
+MetricCol           ,
+Metric   ,
+Indicator            ,
+Line_item_Type ,
+DayofWeek        ,
+Imp_DivisionKey             ,
+Imp_BUKey        ,
+Imp_BULongDisplay       ,
+Imp_ProductKey             ,
+Imp_SiteID         ,
+Imp_ProductClass          ,
+Imp_ContentFocus         ,
+Imp_Siteversion              ,
+Imp_AppVendor             ,
+Advertiser_Name           ,
+Line_Item           ,
+Actual_Impressions        ,
+Actual_Value     ,
+Actual_Revenue              ,
+Imp_GoalTrafficValue_FromMBO            ,
+Imp_ImpressionsRatio   ,
+GoalTrafficValue_Impressions_Forecast ,
+Actual_CPM       ,
+--Classification  ,
+--Final_Impressions_Forecast_Split         ,
+--Final_Revenue_Forecast_Split ,
+CPM_Direct       ,
+CPM_Indirect    ,
+Unmonetized_Impressions_Pct ,
+Direct_Impressions_Pct ,
+Indirect_Impressions_Pct            ,
+/* GoalTrafficValue_Impressions_Forecast*Unmonetized_Impressions_Pct  Unmonetized --Unmonetized_Impressions_Forecast
+,
+GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct  Direct --Direct_Impressions_Forecast
+,
+GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct   Indirect --Indirect_Impressions_Forecast    
+
+,
+*/
+
+((GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct)*CPM_Direct)/1000 Direct,--Direct_Revenue_Forecast ,
+((GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct)*CPM_InDirect)/1000  InDirect,--InDirect_Revenue_Forecast 
+
+
+
+FROM `cmg-uber-global.Dev_Stage.vw_Imps_Goal_4_Updated` 
+where Date>(select max(date) from `cmg-uber-global.Datamart.Impressions_Traffic_Datamart_v2` where indicator in ( 'Revenue_Programmatic','Revenue_GAM_Operative'))
+
+)
+Unpivot(Final_Revenue_Forecast_Split for Classification_adj in (Direct,Indirect ))
+)
+)Data2
+
+
+
+
+
+
+on Data1.Date=Data2.Date
+and Data1.Market=Data2.Market
+and Data1.Imp_BUKey=Data2.Imp_BUKey
+and Data1.ProductType=Data2.ProductType  and Data1.MetricCol=Data2.MetricCol 
+and ifnull(data1.classification_adj,'')=ifnull(Data2.classification_adj,'')
+
+)
+
+)
+/*where -- date='2021-10-28' and 
+budisplay='WPXI-TV' and metriccol='Impressions Display / Pageviews'
+and producttype='app'
+order by date
+*/
