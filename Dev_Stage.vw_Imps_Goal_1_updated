@@ -1,0 +1,286 @@
+
+
+
+
+
+
+
+
+
+
+select * from (
+
+
+
+
+select Base.Date,
+Base.Market,
+Base.DivisionDisplay,
+Base.BUDisplay,
+Base.ProductDisplay,
+Base.ProductType,
+Base.AdType,
+Base.MetricCol,
+Base.Metric,
+Base.Impressions,
+Base.Value,
+Base.Revenue,
+Imp_Goal.Metric        Imp_Metric,
+Imp_Goal.GoalTrafficValue        Imp_GoalTrafficValue,
+Imp_Goal.ImpressionsRatio        Imp_ImpressionsRatio,
+Imp_Goal.GoalTrafficValue_Impressions        Imp_GoalTrafficValue_Impressions,
+Base.Indicator,
+--Base.Line_item_Type,
+Imp_Goal.Date        Imp_Date,
+Imp_Goal.DayofWeek        Imp_DayofWeek,
+Imp_Goal.DivisionKey        Imp_DivisionKey,
+Imp_Goal.DivisionDisplay        Imp_DivisionDisplay,
+Imp_Goal.Market        Imp_Market,
+Imp_Goal.BUKey        Imp_BUKey,
+Imp_Goal.BUDisplay        Imp_BUDisplay,
+Imp_Goal.BULongDisplay        Imp_BULongDisplay,
+Imp_Goal.ProductKey        Imp_ProductKey,
+--Imp_Goal.ProductDisplay        Imp_ProductDisplay,
+Imp_Goal.SiteID        Imp_SiteID,
+Imp_Goal.producttype        Imp_producttype,
+Imp_Goal.ProductClass        Imp_ProductClass,
+Imp_Goal.ContentFocus        Imp_ContentFocus,
+Imp_Goal.Siteversion        Imp_Siteversion,
+Imp_Goal.AppVendor        Imp_AppVendor,
+
+Imp_Goal.AdType_Imp        Imp_AdType_Imp,
+Advertiser_name,
+Line_Item,
+ Base. Line_item_Type -- Exclude creative size . Use filter Line_item_type is not null to exclude
+ from 
+
+
+(
+--View with Goals for Impressions using Ratio Table
+SELECT *,  SPLIT(Metric, ' ')[OFFSET(1)] AdType_Imp FROM `cmg-uber-global.Budget.ImpressionsGoals_ProductType`
+--where Budisplay='WSB-TV' and date='2021-05-31' and producttype='site'
+)
+Imp_Goal
+
+Full Join
+
+
+(
+############################Base from Impressions_Traffic_Datamart_v2######################
+
+SELECT
+  Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  ProductDisplay,
+  ProductType,
+  AdType,
+ CASE
+    WHEN AdType = 'Preroll' THEN 'Impressions Preroll / Segment Start'
+    WHEN AdType = 'Display' THEN 'Impressions Display / Pageviews'
+    WHEN AdType = 'DAI' THEN 'Impressions DAI / Cont Start'
+END AS MetricCol,
+  Metric,
+  Advertiser_name,
+  line_item,
+  --Creative_size,
+  sum(Impressions) Impressions ,
+Sum(Value) Value,
+  Sum(revenue) Revenue,
+  Indicator,
+  CASE
+    WHEN Size = '1x1' AND Line_item_type IN ('Unfilled',
+    'Standard', 'Sponsorship') THEN NULL
+  ELSE
+  Line_item_Type
+END
+  Line_item_Type
+FROM
+  `cmg-uber-global.Datamart.Impressions_Traffic_Datamart_v2`
+WHERE Indicator --!='Revenue_GAM_Operative' 
+=	
+'Revenue_Programmatic'
+and valid=true
+and ifnull(Channel ,'')!= '3rd Party'
+--and
+  --date='2021-06-01'
+  --AND budisplay='WSB-TV'
+ group by 
+  Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  ProductDisplay,
+  ProductType,
+  AdType,
+ CASE
+    WHEN AdType = 'Preroll' THEN 'Impressions Preroll / Segment Start'
+    WHEN AdType = 'Display' THEN 'Impressions Display / Pageviews'
+    WHEN AdType = 'DAI' THEN 'Impressions DAI / Cont Start'
+END ,
+  Metric,
+  CASE
+    WHEN Size = '1x1' AND Line_item_type IN ('Unfilled', 
+    'Standard', 'Sponsorship') THEN NULL
+  ELSE
+  Line_item_Type
+END
+ , Indicator,
+Advertiser_name,
+line_item
+
+Union All
+
+
+SELECT
+  Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  ProductDisplay,
+  ProductType,
+  AdType,
+ CASE
+    WHEN AdType = 'Preroll' THEN 'Impressions Preroll / Segment Start'
+    WHEN AdType = 'Display' THEN 'Impressions Display / Pageviews'
+    WHEN AdType = 'DAI' THEN 'Impressions DAI / Cont Start'
+END AS MetricCol,
+  Metric,
+  --Creative_size,
+  --line_item,
+  Advertiser_Name,
+  line_item,
+  sum(Impressions) Impressions ,
+   sum(Value) Value,
+avg(revenue) Revenue,
+  Indicator,
+  CASE
+    WHEN Size = '1x1' AND Line_item_type IN ('Unfilled', 
+    'Standard', 'Sponsorship') THEN NULL
+  ELSE
+  Line_item_Type
+END
+  Line_item_Type
+FROM
+  `cmg-uber-global.Datamart.Impressions_Traffic_Datamart_v2`
+WHERE Indicator ='Revenue_GAM_Operative' 
+--and
+  --date='2021-06-01'
+  --AND budisplay='WSB-TV'
+  and valid=true
+  and ifnull(Channel ,'')!= '3rd Party'
+  
+  group by 
+   Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  ProductDisplay,
+  ProductType,
+  AdType,
+ CASE
+    WHEN AdType = 'Preroll' THEN 'Impressions Preroll / Segment Start'
+    WHEN AdType = 'Display' THEN 'Impressions Display / Pageviews'
+    WHEN AdType = 'DAI' THEN 'Impressions DAI / Cont Start'
+END,
+  Metric,
+  Indicator,
+  CASE
+    WHEN Size = '1x1' AND Line_item_type IN ('Unfilled', 
+    'Standard', 'Sponsorship') THEN NULL
+  ELSE
+  Line_item_Type
+END,
+line_item,
+Advertiser_Name
+
+#Code for 'Revenue_GAM_Operative', AVG (Revenue) calculation as Revenue is repeated daily
+
+/*SELECT
+  Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  ProductDisplay,
+  ProductType,
+  AdType,
+ CASE
+    WHEN AdType = 'Preroll' THEN 'Impressions Preroll / Segment Start'
+    WHEN AdType = 'Display' THEN 'Impressions Display / Pageviews'
+    WHEN AdType = 'DAI' THEN 'Impressions DAI / Cont Start'
+END AS MetricCol,
+  Metric,
+  --Creative_size,
+  line_item,
+  sum(Impressions) Impressions ,
+   sum(Value) Value,
+sum(revenue) Revenue,
+  Indicator,
+  CASE
+    WHEN Size = '1x1' AND Line_item_type IN ('Unfilled', 
+    'Standard', 'Sponsorship') THEN NULL
+  ELSE
+  Line_item_Type
+END
+
+  Line_item_Type
+FROM(
+
+
+select distinct Date,	DivisionDisplay,	Market,	BUDisplay,	ProductType,	ProductDisplay,	SiteID,	SiteVersion,	DeviceGrouping,	Metric,	Valid,	App_names,	Line_item_type,	Line_item,	Inventory_types,	Creative_size,	Size,	Device_category_ID,	Device_category,	Devices,	Channel,	Source,	AdType,	sum(Impressions) Impressions,	sum(Value)Value,	avg(Revenue)Revenue,	Indicator
+ from Datamart.Impressions_Traffic_Datamart_v2 
+ where  
+ Indicator ='Revenue_GAM_Operative'
+ group by Date,	DivisionDisplay,	Market,	BUDisplay,	ProductType,	ProductDisplay,	SiteID,	SiteVersion,	DeviceGrouping,	Metric,	Valid,	App_names,	Line_item_type,	Line_item,	Inventory_types,	Creative_size,	Size,	Device_category_ID,	Device_category,	Devices,	Channel,	Source,	AdType,	Indicator
+ )
+ group by 
+   Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  ProductDisplay,
+  ProductType,
+  AdType,
+ CASE
+    WHEN AdType = 'Preroll' THEN 'Impressions Preroll / Segment Start'
+    WHEN AdType = 'Display' THEN 'Impressions Display / Pageviews'
+    WHEN AdType = 'DAI' THEN 'Impressions DAI / Cont Start'
+END,
+  Metric,
+  Indicator,
+  CASE
+    WHEN Size = '1x1' AND Line_item_type IN ('Unfilled', 
+    'Standard', 'Sponsorship') THEN NULL
+  ELSE
+  Line_item_Type
+END,
+
+line_item
+*/
+
+
+
+
+
+
+ 
+############################Base from Impressions_Traffic_Datamart_v2######################
+)Base
+
+
+
+ON ifnull(IMP_Goal.Date,'9999-12-31') = ifnull(Base.Date,'9999-12-31') AND  
+ifnull(Imp_Goal.BUDisplay,'') = ifnull(Base.BUDisplay,'') AND
+ifnull(Imp_Goal.Metric,'') = ifnull(MetricCol,'') and 
+ifnull(Imp_Goal.ProductType,'')=ifnull(Base.ProductType,'') and
+ifnull(Imp_Goal.DivisionDisplay,'')=ifnull(Base.DivisionDisplay,'')
+)
+--where date='2021-06-01' and Budisplay='WSB-TV' and metriccol='Impressions Display / Pageviews' and producttype='site'
+
+--where line_item_type is not null   --removing craetive size 1X1 and line item type in (standard or sponsorship)
+--)
+--where Indicator='Revenue_GAM_Operative'  --and line_item_type='Standard'
+--where value is not null
+
+
