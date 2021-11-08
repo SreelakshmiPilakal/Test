@@ -1,0 +1,75 @@
+
+
+
+
+SELECT
+  ifnull(imp_date, date) Date,
+  ifnull(imp_market,market) Market,
+  ifnull(imp_DivisionDisplay,DivisionDisplay) DivisionDisplay,
+  ifnull(imp_BUDisplay,BUDisplay) BUDisplay,
+  --ProductDisplay,
+  ifnull(imp_ProductType,ProductType) ProductType,
+  ifnull(Imp_AdType_Imp,AdType) AdType,
+  ifnull(MetricCol,Imp_Metric) MetricCol,
+  Metric,
+  Indicator,
+  Line_item_Type,
+  Imp_DayofWeek DayofWeek,
+  Imp_DivisionKey,
+  Imp_BUKey,
+  Imp_BULongDisplay,
+  Imp_ProductKey,
+  Imp_SiteID,
+  Imp_ProductClass,
+  Imp_ContentFocus,
+  Imp_Siteversion,
+  Imp_AppVendor,
+  Advertiser_Name,
+  Line_Item,
+  SUM(Impressions)Actual_Impressions,
+  SUM(Value) Actual_Value,
+  avg(Revenue) Actual_Revenue,
+  AVG(Imp_GoalTrafficValue) Imp_GoalTrafficValue_FromMBO,
+  AVG(Imp_ImpressionsRatio) Imp_ImpressionsRatio,
+  AVG(Imp_GoalTrafficValue_Impressions) GoalTrafficValue_Impressions_Forecast,
+  
+-- ratio*Imp_GoalTrafficValue
+
+  
+FROM
+  `cmg-uber-global.Dev_Stage.vw_Imps_Goal_1_updated`
+--For testing
+/*WHERE
+  date='2021-06-01'
+  AND budisplay='WSB-TV'
+  AND imp_metric ='Impressions Display / Pageviews'
+  AND indicator='Revenue_GAM_Operative'
+  AND producttype='site'
+ */
+ --Check with Patrick if we need to keep the below line_item
+  /* AND ifnull(line_item,
+   '-')!='-'
+   */
+    group by Date,
+  Market,
+  DivisionDisplay,
+  BUDisplay,
+  --ProductDisplay,
+  ProductType,
+  AdType,
+  MetricCol,
+  Metric,
+  Indicator,
+  Line_item_Type,
+  Imp_DayofWeek,
+  Imp_DivisionKey,
+  Imp_BUKey,
+  Imp_BULongDisplay,
+  Imp_ProductKey,
+  Imp_SiteID,
+  Imp_ProductClass,
+  Imp_ContentFocus,
+  Imp_Siteversion,
+  Imp_AppVendor,  Advertiser_Name,
+  Line_Item
+  
