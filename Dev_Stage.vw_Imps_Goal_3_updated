@@ -1,0 +1,30 @@
+SELECT
+  *,
+   
+  case when ifnull(Actual_Impressions,0)=0 then 0 else (Actual_revenue/Actual_Impressions)*1000 end  Actual_CPM,
+  
+  --case when GoalTrafficValue_Impressions_Forecast =0 then null else (Actual_revenue/ GoalTrafficValue_Impressions_Forecast )*1000 end  CPM_Prep_Goals,
+  
+  
+  
+  CASE
+    WHEN LOWER(Line_item_type) IN ('unfilled', 'house') THEN 'Unmonetized'
+    WHEN LOWER(line_item_type ) IN ('sponsorship',
+    'standard') THEN 'Direct'
+    when line_item_type is null then null
+   -- WHEN LOWER(line_item_type)='indirect' THEN 'Indirect'
+  --ELSE
+  --line_item_type
+  
+  Else 'Indirect' 
+END
+  Classification
+FROM
+  `cmg-uber-global.Dev_Stage.vw_Imps_Goal_2_updated`
+/*WHERE
+  date='2021-06-01'
+  AND budisplay='WSB-TV'
+  AND metriccol ='Impressions Display / Pageviews'
+  --AND indicator='Revenue_GAM_Operative'
+  AND producttype='site'
+  */
