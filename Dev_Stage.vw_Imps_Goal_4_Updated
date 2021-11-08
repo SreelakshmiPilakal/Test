@@ -1,0 +1,29 @@
+SELECT distinct G.* ,--S. BUDisplay,s. ProductType,s. AdType,
+case when classification='Unmonetized' then GoalTrafficValue_Impressions_Forecast*Unmonetized_Impressions_Pct
+     when classification='Direct' then GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct
+     when classification='Indirect' then GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct  end as Final_Impressions_Forecast_Split, --Impressions forecast1
+     
+     
+   
+   /*   Case when classification='Direct' then (GoalTrafficValue_Impressions_Forecast /1000 )
+           when classification='Indirect' then (GoalTrafficValue_Impressions_Forecast/1000) End as Final_CPM_Forecast,
+           */
+           
+           
+ Case when classification='Direct' then    --((GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct) /1000 )*CPM_Direct 
+ ((GoalTrafficValue_Impressions_Forecast*Direct_Impressions_Pct)*CPM_Direct)/1000
+      when classification='Indirect' then --((GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct )/1000) *CPM_Indirect 
+      ((GoalTrafficValue_Impressions_Forecast*Indirect_Impressions_Pct)*CPM_InDirect)/1000
+      
+      end as Final_Revenue_Forecast_Split,  --CPM Forecast 1
+      CPM_Direct, CPM_Indirect,
+      Unmonetized_Impressions_Pct, Direct_Impressions_Pct, Indirect_Impressions_Pct, 
+      
+      
+       FROM `cmg-uber-global.Dev_Stage.vw_Imps_Goal_3_updated` 
+ G
+left join `cmg-uber-global.Budget.CPM_SalesChannel_Ratio_ProductType`  S
+on G.Budisplay=S.Budisplay and G.producttype=S.producttype and G.adtype=S.adtype
+--where line_item_type='Standard';
+
+--where classification='Indirect'
