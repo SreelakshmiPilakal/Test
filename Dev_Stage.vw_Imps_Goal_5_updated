@@ -1,0 +1,78 @@
+select   ifnull(b.date , a.date) Date,
+ifnull(b.DayofWeek	,a.DayofWeek)	DayofWeek,
+b.	DivisionKey		 DivisionKey,
+ifnull(b. DivisionDisplay	, a.divisiondisplay) DivisionDisplay,
+ifnull(b.Market, a.Market) Market	,
+b.	BUKey		,
+ifnull(a.	BUDisplay,b.BUdisplay) BUDisplay		,
+ifnull(a.	Imp_BULongDisplay		,b.BULongDisplay) BULongDisplay,
+null ProductDisplay		,
+ifnull(b.	ProductType	, a.ProductType) ProductType	,
+a.	AdType		,
+a.	MetricCol	Metric_Imp	,
+--a.	Metric		,
+a.	Indicator		,
+a.	Line_item_Type		,
+--a.	Imp_DayofWeek		,
+--a.	Imp_DivisionKey		,
+--a.	Imp_BUKey		,
+
+a.	Imp_ProductKey		ProductKey,
+a.	Imp_SiteID		SiteID,
+a.	Imp_ProductClass		ProductClass,
+a.	Imp_ContentFocus	ContentFocus	,
+a.	Imp_Siteversion		Siteversion,
+a.	Imp_AppVendor		AppVendor,
+a.	Actual_Impressions		,
+--a.	Actual_Value		,
+a.	Actual_Revenue		,
+a.	Imp_GoalTrafficValue_FromMBO		,
+a.	Imp_ImpressionsRatio		,
+a.	GoalTrafficValue_Impressions_Forecast		,
+Advertiser_name,
+Line_Item,
+--a.	Actual_CPM		,
+a.	Classification		,
+a.	Final_Impressions_Forecast_Split		,
+--a.	Final_CPM_Forecast		,
+Final_Revenue_Forecast_Split,
+--a.	Final_CPM_Forecast_Split		,
+a.	Unmonetized_Impressions_Pct		,
+a.	Direct_Impressions_Pct		,
+a.	Indirect_Impressions_Pct		,
+a.	CPM_Direct		,
+a.	CPM_Indirect		,
+
+
+
+--	BULongDisplay		,
+	
+--	ContentFocus		,
+b.	Metric	  Metric_MBO	,
+	ActualValue		ActualValue_MBO,
+	GoalTrafficValue		GoalTrafficValue_MBO,
+ from 
+
+(SELECT * FROM `cmg-uber-global.Dev_Stage.vw_Imps_Goal_4_Updated_Next` )a
+full Join
+
+(
+SELECT Date, DayofWeek, DivisionKey, DivisionDisplay, Market, BUKey, BUDisplay, BULongDisplay, ProductType,  Metric, sum(ActualValue)ActualValue , 
+sum(GoalTrafficValue) GoalTrafficValue FROM ---`cmg-uber-global.Datamart.BQ_MBOGoal_Datamart_v2` 
+`cmg-uber-global.Dev_Stage.Goals_MBO_2022_step3`
+
+/*WHERE
+  date='2021-06-01'
+  --AND budisplay='WSB-TV'
+  --AND metric ='Pageviews'
+  --AND indicator='Revenue_GAM_Operative'
+  --AND producttype='site'
+  */
+group by 
+Date, DayofWeek, DivisionKey, DivisionDisplay, Market, BUKey, BUDisplay, BULongDisplay, ProductType, Metric
+)b
+on ifnull(a.date,'9999-12-31')=ifnull(b.date,'9999-12-31') and ifnull(a.budisplay,'')=ifnull(b.budisplay,'') and ifnull(a.producttype,'')=ifnull(b.producttype ,'')
+and case when ifnull(trim(SPLIT(MetricCol, '/')[OFFSET(1)]),'')=  'Cont Start' then  'ContinuousVideoChannelStart'
+         when ifnull(trim(SPLIT(MetricCol, '/')[OFFSET(1)]),'')=  'Segment Start' then 'VideoSegmentStart' else ifnull(trim(SPLIT(MetricCol, '/')[OFFSET(1)]),'') end   =ifnull(b.Metric,'')
+--where actualvalue is not null
+where  ifnull(b.date , a.date)>='2021-08-01'
