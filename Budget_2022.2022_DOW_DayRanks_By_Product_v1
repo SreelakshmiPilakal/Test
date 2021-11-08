@@ -1,0 +1,46 @@
+  ------------Run the query for till date with 0.01 and 0.99-----------------------------------------------------------------------------------
+SELECT
+  *,
+  CASE  WHEN Metric IN( 'Pageviews', 'Sessions') AND CurrentYearRank BETWEEN 0.10 AND 0.99 THEN "Used for Forecast" 
+    /*WHEN Metric = 'Pageviews' AND BUDisplay NOT IN ('WF-TV', 'WFXT-TV') AND CurrentYearRank between  0.01 AND  0.99 THEN "Used for Forecast"
+    WHEN Metric = 'Pageviews' AND BUDisplay IN ('WF-TV','WFXT-TV') AND CurrentYearRank between 0.20 AND 0.98 THEN "Used for Forecast"
+    WHEN Metric = 'Sessions' AND BUDisplay NOT IN ('KIRO-TV', 'KOKI-TV', 'WHBQ-TV') AND CurrentYearRank between  0.15 AND 0.95 THEN "Used for Forecast"
+    WHEN Metric = 'Sessions' AND BUDisplay IN ('KIRO-TV','KOKI-TV','WHBQ-TV') AND CurrentYearRank between  0.01 AND 0.99 THEN "Used for Forecast"
+    */
+    -- WHEN BUDisplay IN ('KOKI-TV','WJAX-TV','WSB-TV','WHBQ-TV') AND Metric = 'ContinuousVideoChannelStart' AND CurrentYearRank >= .01 AND CurrentYearRank <=.99 THEN 'Used for Forecast'
+    -- WHEN BUDisplay IN ('KIRO-TV','WFXT-TV','WSOC-TV') AND Metric = 'ContinuousVideoChannelStart' AND CurrentYearRank >= .20 AND CurrentYearRank <= .95 THEN 'Used for Forecast'
+    --WHEN BUDisplay IN ('WPXI-TV') AND Metric = 'ContinuousVideoChannelStart' AND CurrentYearRank >= .30 AND CurrentYearRank <= .95 THEN 'Used for Forecast'
+    --WHEN BUDisplay = 'WHIO-TV' AND Metric = 'ContinuousVideoChannelStart' AND CurrentYearRank >= .10 AND CurrentYearRank <= .65 THEN 'Used for Forecast'
+  ELSE
+  "Exclude"
+END
+  AS CurrentYearIndicator
+FROM (
+  SELECT
+    Date,
+    DayofWeek,
+    BUKey,
+    BUDisplay,
+    BULongDisplay,
+    ProductKey,
+    ProductDisplay,
+    ProductType,
+    ContentFocus,
+    CASE
+      WHEN SiteVersion IN ('mobile site', 'non-mobile site') THEN 'responsive site'
+    ELSE
+    SiteVersion
+  END
+    AS SiteVersion,
+    Metric,
+    ActualValue AS CurrentYearActual,
+    PERCENT_RANK() OVER (PARTITION BY BUKey, ProductKey, SiteVersion, Metric, DayofWeek ORDER BY ActualValue) CurrentYearRank
+  FROM
+    `cmg-uber-global.Datamart.BQ_MBOGoal_Datamart_v2`
+  WHERE
+    Date BETWEEN '2021-01-01'
+      AND '2021-11-02'
+    AND ActualValue >= 0 
+    AND Metric in ('Pageviews','Sessions'))
+
+  -------------------------------------------------------------------------
