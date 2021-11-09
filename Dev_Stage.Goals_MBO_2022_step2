@@ -1,6 +1,6 @@
 SELECT Date, DayofWeek, DivisionKey, DivisionDisplay, Market, BUKey, BUDisplay, BULongDisplay, ProductKey, ProductDisplay, SiteID, ProductType, ProductClass, ContentFocus, PaidOrFree, SiteVersion, AppVendor, Metric, GoalTrafficValue, VersionC, LoadDate, Valid, Budget_Change_Flag, OriginalBudget FROM `cmg-uber-global.Goals.Goals_MBO` 
 Union All
 SELECT Date, DayofWeek, DivisionKey, DivisionDisplay, Market, BUKey, BUDisplay, BULongDisplay, ProductKey, ProductDisplay, SiteID, ProductType, ProductClass, ContentFocus, PaidOrFree, SiteVersion, AppVendor, Metric, --GoalTrafficValue_2021,
-GoalTrafficValue   , 2022.1 VersionC, cast(current_datetime() as timestamp) as LoadDate, true valid, true Budget_Change_Flag, null OriginalBudget FROM `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step1` 
+GoalTrafficValue   , 2022.1 VersionC, cast(current_datetime() as timestamp) as LoadDate, true valid, false Budget_Change_Flag, null OriginalBudget FROM `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step1` 
 
 
