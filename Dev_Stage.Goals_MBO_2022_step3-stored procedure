@@ -1,0 +1,1005 @@
+CREATE OR REPLACE PROCEDURE `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step3`()
+BEGIN 
+
+
+#delete from `cmg-uber-global.Dev_Stage.BQ_MBO_Dev` where 1=1;
+#insert into `cmg-uber-global.Dev_Stage.BQ_MBO_Dev`
+
+##Add columns 
+
+delete from `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step3` where 1=1;
+insert into `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step3`
+--Only from 2021-01-01 on wards
+
+
+
+
+
+
+Select D.	Date	,
+D.	DayofWeek	,
+D.	DivisionKey	,
+D.	DivisionDisplay	,
+D.	Market	,
+D.	BUKey	,
+D.	BUDisplay	,
+D.	BULongDisplay	,
+D.	ProductKey	,
+D.	ProductDisplay	,
+D.	SiteID	,
+D.	ProductClass	,
+D.	ProductType	,
+D.	ContentFocus	,
+D.	Siteversion	,
+D.	AppVendor	,
+D.	Metric	,
+D.	ActualValue	,
+D.	GoalTrafficValue	,
+D.	Budget_change_flag	,
+	OldBudget	,
+ from(
+SELECT
+  DISTINCT ToT.Date,
+  ToT.DayofWeek,
+  ToT.DivisionKey,
+  ToT.DivisionDisplay,
+  ToT.Market,
+  ToT.BUKey,
+  ToT.BUDisplay,
+  ToT.BULongDisplay,
+  ToT.ProductKey,
+  ToT.ProductDisplay,
+  ToT.SiteID,
+  ToT.ProductClass,
+  ToT.ProductType,
+  ToT.ContentFocus,
+  ToT.Siteversion,
+  CASE
+    WHEN ToT.AppVendor="wdt" THEN "wsi"
+  ELSE
+  ToT.AppVendor
+END
+  AS AppVendor,
+  ToT.Metric,
+  AVG(ToT.ActualValue) AS ActualValue,
+  ifnull(SUM(ToT.GoalTrafficValue),
+    0) AS GoalTrafficValue,
+    false Budget_change_flag,
+    null as Originalbudget
+FROM (
+  SELECT
+    DISTINCT mbo.Date,
+    mbo.DayofWeek,
+    mbo.DivisionKey,
+    mbo.DivisionDisplay,
+    mbo.Market,
+    mbo.BUKey,
+    mbo.BUDisplay,
+    dpt.BULongDisplay,
+    mbo.ProductKey,
+    mbo.ProductDisplay,
+    dpt.SiteID,
+    dpt.ProductType,
+    mbo.VersionC,
+    CASE
+      WHEN dpt.Productclass = "" AND dpt.SiteID = "wdbo-fm" AND dpt.Siteversion = "responsive site" THEN "news"
+    ELSE
+    dpt.Productclass
+  END
+    AS ProductClass,
+    dpt.Siteversion AS Siteversion,
+    CASE
+      WHEN dpt.Appvendor IS NULL AND dpt.Siteversion = "responsive app" THEN "olive"
+      WHEN dpt.Appvendor = "pagesuite"
+    AND dpt.Date < "2019-01-01" /*********************Added for report**********/ THEN "olive"
+    ELSE
+    dpt.Appvendor
+  END
+    AS AppVendor,
+    dpt.ContentFocus,
+    mbo.Metric,
+    SUM(dpt.Value) AS ActualValue,
+    mbo.GoalTrafficValue
+  FROM (
+    SELECT
+      DISTINCT Date,
+      DayofWeek,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      ProductKey,
+      ProductDisplay,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND producttype="app" THEN "wokv-fm"
+      ELSE
+      SiteID
+    END
+      AS SIteID,
+      ProductType,
+      IFNULL(ProductClass,
+        "") AS ProductClass,
+      ContentFocus,
+      PaidOrFree,
+      CASE
+        WHEN SiteID IN ( "wngc-fm", "wgmg-fm", "wpup-fm") AND Date >= "2018-10-31" AND SiteVersion IN ( "mobile site", "non-mobile site" ) THEN "responsive site"
+        WHEN SiteID IN ( "kjsr-fm",
+        "krav-fm",
+        "kwen-fm",
+        "kwen-hd2")
+      AND Date >= "2018-11-29"
+      AND SiteVersion IN ( "mobile site",
+        "non-mobile site" ) THEN "responsive site"
+      ELSE
+      SiteVersion
+    END
+      AS SiteVersion,
+      IFNULL(AppVendor,
+        "") AS AppVendor,
+      Metric,
+      GoalTrafficValue,
+      VersionC
+    FROM
+      --`cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2_Data_2020`
+     -- `cmg-uber-global.Dev_Stage.Goals_MBO_2020_Reforecast_07292020`
+     -- `cmg-uber-global.Budget_Reforecast.Budget_Reforecast_Goals_08012021`
+          `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2`
+    WHERE
+      CAST(VersionC AS string) IN ( "2018.1",
+        "2018.2" ) ) mbo
+  LEFT JOIN (
+    SELECT
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      --Added to convert all wokv-fm and wokv-am app"s to wokv-fm app"s
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND producttype="app" THEN "wokv-fm"
+      ELSE
+      SiteID
+    END
+      AS SiteID,
+      Siteversion,
+      AppVendor,
+      Productclass,
+      Metric,
+      SUM(Value) AS Value
+    FROM
+      `cmg-uber-global.Data_Views.vw_ProductSummary_Datamart`
+    GROUP BY
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND producttype="app" THEN "wokv-fm"
+      ELSE
+      SiteID
+    END
+      ,
+      Siteversion,
+      Appvendor,
+      Productclass,
+      Metric ) dpt
+  ON
+    mbo.Date = dpt.Date
+    AND mbo.SiteID = (CASE
+        WHEN dpt.SiteID = "springfieldnewssun" THEN "springfieldnews"
+        WHEN dpt.SiteID = "hookem"
+      OR dpt.SiteID = "statesman-hookem" THEN "hookemplus"
+      ELSE
+      dpt.SiteID
+    END
+      )
+    AND mbo.Metric = dpt.Metric
+    AND IFNULL(mbo.AppVendor,
+      "") = IFNULL(
+      CASE
+        WHEN dpt.Appvendor IS NULL AND dpt.Siteversion = "responsive app" THEN "olive"
+        WHEN dpt.Appvendor = "pagesuite"
+      AND dpt.Date < "2019-01-01" --AND metric ="pageviews"  /*********************Added for report**********/
+      THEN "olive"
+        WHEN dpt.Appvendor = "ajc-store" THEN ""
+      ELSE
+      dpt.Appvendor
+    END
+      ,
+      "" )
+    AND mbo.SiteVersion = dpt.Siteversion
+    AND IFNULL(
+      CASE
+        WHEN mbo.ProductClass = "" AND mbo.SiteVersion LIKE "%yahoo%" THEN "news"
+      ELSE
+      mbo.ProductClass
+    END
+      ,
+      "" ) = IFNULL(
+      CASE
+        WHEN dpt.Productclass= "" AND dpt.SiteID = "wdbo-fm" AND dpt.Siteversion = "responsive site" THEN "news"
+      ELSE
+      dpt.Productclass
+    END
+      ,
+      "" )
+  GROUP BY
+    mbo.Date,
+    mbo.DayofWeek,
+    mbo.DivisionKey,
+    mbo.DivisionDisplay,
+    mbo.Market,
+    mbo.BUKey,
+    mbo.BUDisplay,
+    dpt.BULongDisplay,
+    mbo.ProductKey,
+    mbo.ProductDisplay,
+    dpt.SiteID,
+    dpt.ProductType,
+    mbo.VersionC,
+    CASE
+      WHEN dpt.Productclass = "" AND dpt.SiteID = "wdbo-fm" AND dpt.Siteversion = "responsive site" THEN "news"
+    ELSE
+    dpt.Productclass
+  END
+    ,
+    dpt.ContentFocus,
+    dpt.Siteversion,
+    CASE
+      WHEN dpt.Appvendor IS NULL AND dpt.Siteversion = "responsive app" THEN "olive"
+      WHEN dpt.Appvendor = "pagesuite"
+    AND dpt.Date < "2019-01-01" --AND metric ="pageviews"   /*********************Added for report**********/
+    THEN "olive"
+    ELSE
+    dpt.Appvendor
+  END
+    ,
+    mbo.Metric,
+    mbo.GoalTrafficValue ) ToT
+WHERE
+  Date <= "2018-12-31"
+GROUP BY
+  ToT.Date,
+  ToT.DayofWeek,
+  ToT.DivisionKey,
+  ToT.DivisionDisplay,
+  ToT.Market,
+  ToT.BUKey,
+  ToT.BUDisplay,
+  ToT.BULongDisplay,
+  ToT.ProductKey,
+  ToT.ProductDisplay,
+  ToT.SiteID,
+  ToT.ProductClass,
+  ToT.ProductType,
+  ToT.ContentFocus,
+  ToT.Siteversion,
+  ToT.AppVendor,
+  ToT.Metric
+UNION ALL
+
+
+
+
+
+
+
+SELECT
+  tot.Date,
+  tot.DayofWeek,
+  tot.DivisionKey,
+  tot.DivisionDisplay,
+  tot.Market,
+  tot.BUKey,
+  tot.BUDisplay,
+  tot.BULongDisplay,
+  tot.ProductKey,
+  tot.ProductDisplay,
+  tot.SiteID,
+  tot.ProductClass,
+  tot.ProductType,
+  tot.ContentFocus,
+  tot.SiteVersion,
+  CASE
+    WHEN tot.AppVendor="wdt" THEN "wsi"
+  ELSE
+  tot.AppVendor
+END
+  AS AppVendor,
+  tot.Metric,
+  AVG(tot.ActualValue) AS ActualValue,
+  SUM(tot.GoalTrafficValue) AS GoalTrafficValue,
+  Budget_Change_Flag, tot.OriginalBudget
+FROM (
+  SELECT
+    DISTINCT     ifnull(dpt1.Date,
+      mbo1.date )date,
+    --FORMAT_DATE('%A',dpt1.Date) ,
+    --format_date('%V', dpt1.DATE),
+    ifnull(mbo1.DayofWeek,
+      FORMAT_DATE('%A',dpt1.Date)) DayofWeek,
+    ifnull(dpt1.DivisionKey,
+      mbo1.DivisionKey) DivisionKey,
+    ifnull(dpt1.DivisionDisplay,
+      mbo1.DivisionDisplay) DivisionDisplay,
+    ifnull(dpt1.Market,
+      mbo1.Market) Market,
+    ifnull(dpt1.BUKey,
+      mbo1.BUKey) BUKey,
+    ifnull(dpt1.BUDisplay,
+      mbo1.BUDisplay) BUDisplay,
+    ifnull(dpt1.BULongDisplay,
+      mbo1.BULongDisplay) BULongDisplay,
+    ifnull(dpt1.ProductKey,
+      mbo1.ProductKey) ProductKey,
+    ifnull(dpt1.ProductDisplay,
+      mbo1.ProductDisplay) ProductDisplay,
+    ifnull(dpt1.SiteID,
+      mbo1.SiteID) SiteID,
+    ifnull(dpt1.ProductType,
+      mbo1.ProductType) ProductType,
+    ifnull(IFNULL(dpt1.ProductClass,
+        mbo1.productclass),
+      '') AS ProductClass,
+    ifnull(dpt1.ContentFocus,
+      mbo1.ContentFocus) ContentFocus,
+    mbo1.PaidOrFree,
+    ifnull(CASE
+        WHEN dpt1.SiteVersion LIKE "smart%yahoo%" THEN "smart-tv: yahoo-tv"
+        WHEN dpt1.SiteVersion LIKE "%smart%samsung%" THEN "smart-tv: samsung-tv"
+      --Radio sites launced after 2019-01-15
+      ELSE
+      dpt1.SiteVersion
+    END
+      ,
+      mbo1.siteversion) AS SiteVersion,
+    ifnull(IFNULL(CASE
+          WHEN dpt1.AppVendor="wdt" AND dpt1.date>="2019-04-01" THEN "wsi"
+        ELSE
+        dpt1.AppVendor
+      END
+        ,
+        mbo1.appvendor),
+      '') AS AppVendor,
+    ifnull(dpt1.Metric,
+      mbo1.Metric) Metric,
+    mbo1.GoalTrafficValue,
+    dpt1.Value AS ActualValue,
+    Budget_Change_Flag,
+    OriginalBudget
+  FROM (
+    SELECT
+      *
+    FROM
+      --`cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2_Data_2020`
+      --`cmg-uber-global.Dev_Stage.Goals_MBO_2020_Reforecast_07292020`
+       --`cmg-uber-global.Budget_Reforecast.Budget_Reforecast_Goals_08012021`
+            `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2`
+    WHERE
+      valid=TRUE) mbo1
+  FULL JOIN (
+    SELECT
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND Producttype="app" THEN "wokv-fm"
+      ELSE
+      siteid
+    END
+      AS SiteID,
+      Siteversion,
+      Appvendor,
+      Productclass,
+      Metric,
+      SUM(Value) AS Value
+    FROM
+      `cmg-uber-global.Data_Views.vw_ProductSummary_Datamart`
+    GROUP BY
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      siteid,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND Producttype="app" THEN "wokv-fm"
+      ELSE
+      siteid
+    END
+      ,
+      Siteversion,
+      Appvendor,
+      Productclass,
+      Metric ) dpt1
+  ON
+    mbo1.Date = dpt1.Date
+    AND
+    CASE
+      WHEN mbo1.SiteVersion LIKE "smart%yahoo%" THEN "smart-tv: yahoo-tv"
+      WHEN mbo1.SiteVersion LIKE "%smart%samsung%" THEN "smart-tv: samsung-tv"
+    ELSE
+    mbo1.SiteVersion
+  END
+    = dpt1.Siteversion
+    AND IFNULL(mbo1.ProductType,
+      "") = dpt1.ProductType
+    AND IFNULL(CASE
+        WHEN dpt1.AppVendor="wdt" AND dpt1.date>="2019-04-01" THEN "wsi"
+      ELSE
+      mbo1.AppVendor
+    END
+      ,
+      "") = dpt1.Appvendor
+    AND mbo1.BUKey = dpt1.BUKey
+    AND mbo1.ProductKey = dpt1.ProductKey
+    AND mbo1.Metric = dpt1.Metric ) tot
+GROUP BY
+  tot.Date,
+  tot.DayofWeek,
+  tot.DivisionKey,
+  tot.DivisionDisplay,
+  tot.Market,
+  tot.BUKey,
+  tot.BUDisplay,
+  tot.BULongDisplay,
+  tot.ProductKey,
+  tot.ProductDisplay,
+  tot.SiteID,
+  tot.ProductClass,
+  tot.ProductType,
+  tot.ContentFocus,
+  tot.SiteVersion,
+  tot.AppVendor,
+  tot.Metric,
+  Budget_Change_Flag,
+  OriginalBudget
+  
+  )D
+  
+  
+  
+  
+  ---------------------------
+  
+  
+  left join (     SELECT date,
+        DivisionKey,
+        DivisionDisplay,
+        Market,
+        BUKey,
+        BUDisplay,
+          case when BULongDisplay in ('Exitos 96.5', '107.3 Solo Exitos') then 'Exitos 96.5'
+               when BULongDisplay in ( 'WOKV AM NEWS','ESPN 690') then 'ESPN 690' else  BULongDisplay end BULongDisplay,
+        ProductKey,
+        ProductDisplay,
+        SiteID,
+        ProductClass,
+        ProductType,
+        ContentFocus,
+        Siteversion,
+        AppVendor,
+        Metric,
+        SUM(ActualValue) AS ActualValue,
+        SUM(GoalTrafficValue) AS OldBudget
+      FROM
+        `cmg-uber-global.Datamart.BQ_MBOGoal_Datamart_2020` 
+        group by DivisionKey,Date,
+        DivisionDisplay,
+        Market,
+        BUKey,
+        BUDisplay,
+          case when BULongDisplay in ('Exitos 96.5', '107.3 Solo Exitos') then 'Exitos 96.5'
+               when BULongDisplay in ( 'WOKV AM NEWS','ESPN 690') then 'ESPN 690' else  BULongDisplay end ,
+        ProductKey,
+        ProductDisplay,
+        SiteID,
+        ProductClass,
+        ProductType,
+        ContentFocus,
+        Siteversion,
+        AppVendor,
+        Metric) G
+  
+  on G. Date=D. Date
+  --and G. DayofWeek=D. DayofWeek
+  and G. DivisionKey=D. DivisionKey
+  and G. BUKey=D. BUKey
+  and g.productkey=d.productkey
+  and G. Siteversion=D. Siteversion
+  and ifnull(G. AppVendor,'')=ifnull(D. AppVendor,'')
+  and ifnull(G. ProductClass,'')=ifnull(D. ProductClass,'')
+  and G. Metric=D. Metric
+  
+  where D.date>='2021-01-01'
+  
+  ----------------------------
+  
+  
+  ##################################################################################################################
+  
+  #Part2
+  #Before 2021
+  
+  
+  UNION ALL
+  
+  
+  
+  select * from (
+SELECT
+  DISTINCT ToT.Date,
+  ToT.DayofWeek,
+  ToT.DivisionKey,
+  ToT.DivisionDisplay,
+  ToT.Market,
+  ToT.BUKey,
+  ToT.BUDisplay,
+  ToT.BULongDisplay,
+  ToT.ProductKey,
+  ToT.ProductDisplay,
+  ToT.SiteID,
+  ToT.ProductClass,
+  ToT.ProductType,
+  ToT.ContentFocus,
+  ToT.Siteversion,
+  CASE
+    WHEN ToT.AppVendor="wdt" THEN "wsi"
+  ELSE
+  ToT.AppVendor
+END
+  AS AppVendor,
+  ToT.Metric,
+  AVG(ToT.ActualValue) AS ActualValue,
+  ifnull(SUM(ToT.GoalTrafficValue),
+    0) AS GoalTrafficValue,
+    false Budget_change_flag,
+    null as Originalbudget
+FROM (
+  SELECT
+    DISTINCT mbo.Date,
+    mbo.DayofWeek,
+    mbo.DivisionKey,
+    mbo.DivisionDisplay,
+    mbo.Market,
+    mbo.BUKey,
+    mbo.BUDisplay,
+    dpt.BULongDisplay,
+    mbo.ProductKey,
+    mbo.ProductDisplay,
+    dpt.SiteID,
+    dpt.ProductType,
+    mbo.VersionC,
+    CASE
+      WHEN dpt.Productclass = "" AND dpt.SiteID = "wdbo-fm" AND dpt.Siteversion = "responsive site" THEN "news"
+    ELSE
+    dpt.Productclass
+  END
+    AS ProductClass,
+    dpt.Siteversion AS Siteversion,
+    CASE
+      WHEN dpt.Appvendor IS NULL AND dpt.Siteversion = "responsive app" THEN "olive"
+      WHEN dpt.Appvendor = "pagesuite"
+    AND dpt.Date < "2019-01-01" /*********************Added for report**********/ THEN "olive"
+    ELSE
+    dpt.Appvendor
+  END
+    AS AppVendor,
+    dpt.ContentFocus,
+    mbo.Metric,
+    SUM(dpt.Value) AS ActualValue,
+    mbo.GoalTrafficValue
+  FROM (
+    SELECT
+      DISTINCT Date,
+      DayofWeek,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      ProductKey,
+      ProductDisplay,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND producttype="app" THEN "wokv-fm"
+      ELSE
+      SiteID
+    END
+      AS SIteID,
+      ProductType,
+      IFNULL(ProductClass,
+        "") AS ProductClass,
+      ContentFocus,
+      PaidOrFree,
+      CASE
+        WHEN SiteID IN ( "wngc-fm", "wgmg-fm", "wpup-fm") AND Date >= "2018-10-31" AND SiteVersion IN ( "mobile site", "non-mobile site" ) THEN "responsive site"
+        WHEN SiteID IN ( "kjsr-fm",
+        "krav-fm",
+        "kwen-fm",
+        "kwen-hd2")
+      AND Date >= "2018-11-29"
+      AND SiteVersion IN ( "mobile site",
+        "non-mobile site" ) THEN "responsive site"
+      ELSE
+      SiteVersion
+    END
+      AS SiteVersion,
+      IFNULL(AppVendor,
+        "") AS AppVendor,
+      Metric,
+      GoalTrafficValue,
+      VersionC
+    FROM
+      --`cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2_Data_2020`
+     -- `cmg-uber-global.Dev_Stage.Goals_MBO_2020_Reforecast_07292020`
+     -- `cmg-uber-global.Budget_Reforecast.Budget_Reforecast_Goals_08012021`
+          `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2`
+    WHERE
+      CAST(VersionC AS string) IN ( "2018.1",
+        "2018.2" ) ) mbo
+  LEFT JOIN (
+    SELECT
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      --Added to convert all wokv-fm and wokv-am app"s to wokv-fm app"s
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND producttype="app" THEN "wokv-fm"
+      ELSE
+      SiteID
+    END
+      AS SiteID,
+      Siteversion,
+      AppVendor,
+      Productclass,
+      Metric,
+      SUM(Value) AS Value
+    FROM
+      `cmg-uber-global.Data_Views.vw_ProductSummary_Datamart`
+    GROUP BY
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND producttype="app" THEN "wokv-fm"
+      ELSE
+      SiteID
+    END
+      ,
+      Siteversion,
+      Appvendor,
+      Productclass,
+      Metric ) dpt
+  ON
+    mbo.Date = dpt.Date
+    AND mbo.SiteID = (CASE
+        WHEN dpt.SiteID = "springfieldnewssun" THEN "springfieldnews"
+        WHEN dpt.SiteID = "hookem"
+      OR dpt.SiteID = "statesman-hookem" THEN "hookemplus"
+      ELSE
+      dpt.SiteID
+    END
+      )
+    AND mbo.Metric = dpt.Metric
+    AND IFNULL(mbo.AppVendor,
+      "") = IFNULL(
+      CASE
+        WHEN dpt.Appvendor IS NULL AND dpt.Siteversion = "responsive app" THEN "olive"
+        WHEN dpt.Appvendor = "pagesuite"
+      AND dpt.Date < "2019-01-01" --AND metric ="pageviews"  /*********************Added for report**********/
+      THEN "olive"
+        WHEN dpt.Appvendor = "ajc-store" THEN ""
+      ELSE
+      dpt.Appvendor
+    END
+      ,
+      "" )
+    AND mbo.SiteVersion = dpt.Siteversion
+    AND IFNULL(
+      CASE
+        WHEN mbo.ProductClass = "" AND mbo.SiteVersion LIKE "%yahoo%" THEN "news"
+      ELSE
+      mbo.ProductClass
+    END
+      ,
+      "" ) = IFNULL(
+      CASE
+        WHEN dpt.Productclass= "" AND dpt.SiteID = "wdbo-fm" AND dpt.Siteversion = "responsive site" THEN "news"
+      ELSE
+      dpt.Productclass
+    END
+      ,
+      "" )
+  GROUP BY
+    mbo.Date,
+    mbo.DayofWeek,
+    mbo.DivisionKey,
+    mbo.DivisionDisplay,
+    mbo.Market,
+    mbo.BUKey,
+    mbo.BUDisplay,
+    dpt.BULongDisplay,
+    mbo.ProductKey,
+    mbo.ProductDisplay,
+    dpt.SiteID,
+    dpt.ProductType,
+    mbo.VersionC,
+    CASE
+      WHEN dpt.Productclass = "" AND dpt.SiteID = "wdbo-fm" AND dpt.Siteversion = "responsive site" THEN "news"
+    ELSE
+    dpt.Productclass
+  END
+    ,
+    dpt.ContentFocus,
+    dpt.Siteversion,
+    CASE
+      WHEN dpt.Appvendor IS NULL AND dpt.Siteversion = "responsive app" THEN "olive"
+      WHEN dpt.Appvendor = "pagesuite"
+    AND dpt.Date < "2019-01-01" --AND metric ="pageviews"   /*********************Added for report**********/
+    THEN "olive"
+    ELSE
+    dpt.Appvendor
+  END
+    ,
+    mbo.Metric,
+    mbo.GoalTrafficValue ) ToT
+WHERE
+  Date <= "2018-12-31"
+GROUP BY
+  ToT.Date,
+  ToT.DayofWeek,
+  ToT.DivisionKey,
+  ToT.DivisionDisplay,
+  ToT.Market,
+  ToT.BUKey,
+  ToT.BUDisplay,
+  ToT.BULongDisplay,
+  ToT.ProductKey,
+  ToT.ProductDisplay,
+  ToT.SiteID,
+  ToT.ProductClass,
+  ToT.ProductType,
+  ToT.ContentFocus,
+  ToT.Siteversion,
+  ToT.AppVendor,
+  ToT.Metric
+UNION ALL
+
+
+
+
+
+
+
+SELECT
+  tot.Date,
+  tot.DayofWeek,
+  tot.DivisionKey,
+  tot.DivisionDisplay,
+  tot.Market,
+  tot.BUKey,
+  tot.BUDisplay,
+  tot.BULongDisplay,
+  tot.ProductKey,
+  tot.ProductDisplay,
+  tot.SiteID,
+  tot.ProductClass,
+  tot.ProductType,
+  tot.ContentFocus,
+  tot.SiteVersion,
+  CASE
+    WHEN tot.AppVendor="wdt" THEN "wsi"
+  ELSE
+  tot.AppVendor
+END
+  AS AppVendor,
+  tot.Metric,
+  AVG(tot.ActualValue) AS ActualValue,
+  SUM(tot.GoalTrafficValue) AS GoalTrafficValue,
+  Budget_Change_Flag, tot.OriginalBudget
+FROM (
+  SELECT
+    DISTINCT     ifnull(dpt1.Date,
+      mbo1.date )date,
+    --FORMAT_DATE('%A',dpt1.Date) ,
+    --format_date('%V', dpt1.DATE),
+    ifnull(mbo1.DayofWeek,
+      FORMAT_DATE('%A',dpt1.Date)) DayofWeek,
+    ifnull(dpt1.DivisionKey,
+      mbo1.DivisionKey) DivisionKey,
+    ifnull(dpt1.DivisionDisplay,
+      mbo1.DivisionDisplay) DivisionDisplay,
+    ifnull(dpt1.Market,
+      mbo1.Market) Market,
+    ifnull(dpt1.BUKey,
+      mbo1.BUKey) BUKey,
+    ifnull(dpt1.BUDisplay,
+      mbo1.BUDisplay) BUDisplay,
+    ifnull(dpt1.BULongDisplay,
+      mbo1.BULongDisplay) BULongDisplay,
+    ifnull(dpt1.ProductKey,
+      mbo1.ProductKey) ProductKey,
+    ifnull(dpt1.ProductDisplay,
+      mbo1.ProductDisplay) ProductDisplay,
+    ifnull(dpt1.SiteID,
+      mbo1.SiteID) SiteID,
+    ifnull(dpt1.ProductType,
+      mbo1.ProductType) ProductType,
+    ifnull(IFNULL(dpt1.ProductClass,
+        mbo1.productclass),
+      '') AS ProductClass,
+    ifnull(dpt1.ContentFocus,
+      mbo1.ContentFocus) ContentFocus,
+    mbo1.PaidOrFree,
+    ifnull(CASE
+        WHEN dpt1.SiteVersion LIKE "smart%yahoo%" THEN "smart-tv: yahoo-tv"
+        WHEN dpt1.SiteVersion LIKE "%smart%samsung%" THEN "smart-tv: samsung-tv"
+      --Radio sites launced after 2019-01-15
+      ELSE
+      dpt1.SiteVersion
+    END
+      ,
+      mbo1.siteversion) AS SiteVersion,
+    ifnull(IFNULL(CASE
+          WHEN dpt1.AppVendor="wdt" AND dpt1.date>="2019-04-01" THEN "wsi"
+        ELSE
+        dpt1.AppVendor
+      END
+        ,
+        mbo1.appvendor),
+      '') AS AppVendor,
+    ifnull(dpt1.Metric,
+      mbo1.Metric) Metric,
+    mbo1.GoalTrafficValue,
+    dpt1.Value AS ActualValue,
+    Budget_Change_Flag,
+    OriginalBudget
+  FROM (
+    SELECT
+      *
+    FROM
+      --`cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2_Data_2020`
+      --`cmg-uber-global.Dev_Stage.Goals_MBO_2020_Reforecast_07292020`
+      -- `cmg-uber-global.Budget_Reforecast.Budget_Reforecast_Goals_08012021`
+           `cmg-uber-global.Dev_Stage.Goals_MBO_2022_step2`
+    WHERE
+      valid=TRUE) mbo1
+  FULL JOIN (
+    SELECT
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND Producttype="app" THEN "wokv-fm"
+      ELSE
+      siteid
+    END
+      AS SiteID,
+      Siteversion,
+      Appvendor,
+      Productclass,
+      Metric,
+      SUM(Value) AS Value
+    FROM
+      `cmg-uber-global.Data_Views.vw_ProductSummary_Datamart`
+    GROUP BY
+      Date,
+      DivisionKey,
+      DivisionDisplay,
+      Market,
+      BUKey,
+      siteid,
+      BUDisplay,
+      BULongDisplay,
+      ProductType,
+      ProductKey,
+      ProductDisplay,
+      ContentFocus,
+      CASE
+        WHEN SiteID IN ("wokv-fm", "wokv-am") AND Producttype="app" THEN "wokv-fm"
+      ELSE
+      siteid
+    END
+      ,
+      Siteversion,
+      Appvendor,
+      Productclass,
+      Metric ) dpt1
+  ON
+    mbo1.Date = dpt1.Date
+    AND
+    CASE
+      WHEN mbo1.SiteVersion LIKE "smart%yahoo%" THEN "smart-tv: yahoo-tv"
+      WHEN mbo1.SiteVersion LIKE "%smart%samsung%" THEN "smart-tv: samsung-tv"
+    ELSE
+    mbo1.SiteVersion
+  END
+    = dpt1.Siteversion
+    AND IFNULL(mbo1.ProductType,
+      "") = dpt1.ProductType
+    AND IFNULL(CASE
+        WHEN dpt1.AppVendor="wdt" AND dpt1.date>="2019-04-01" THEN "wsi"
+      ELSE
+      mbo1.AppVendor
+    END
+      ,
+      "") = dpt1.Appvendor
+    AND mbo1.BUKey = dpt1.BUKey
+    AND mbo1.ProductKey = dpt1.ProductKey
+    AND mbo1.Metric = dpt1.Metric ) tot
+GROUP BY
+  tot.Date,
+  tot.DayofWeek,
+  tot.DivisionKey,
+  tot.DivisionDisplay,
+  tot.Market,
+  tot.BUKey,
+  tot.BUDisplay,
+  tot.BULongDisplay,
+  tot.ProductKey,
+  tot.ProductDisplay,
+  tot.SiteID,
+  tot.ProductClass,
+  tot.ProductType,
+  tot.ContentFocus,
+  tot.SiteVersion,
+  tot.AppVendor,
+  tot.Metric,
+  Budget_Change_Flag,
+  OriginalBudget)
+  where date<'2021-01-01';
+
+
+END;
